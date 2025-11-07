@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corrida 2D Avançada</title>
+<style>
+  body {
+    margin: 0;
+    background: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+#menu {
+  text-align: center;
+  background: url("fundoMenu.gif") no-repeat center center;
+  background-size: cover;
+  width: 1200px;        /* mesmo tamanho do canvas */
+  height: 700px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #000;
+}
+
+  canvas {
+    border: 3px solid #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px #000;
+  }
+
+  #menu {
+    text-align: center;
+  }
+
+  #color-options button {
+    width: 120px;
+    height: 60px;
+    margin: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 0 10px #000;
+  }
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1 style="color:white;">Escolha a cor do carro:</h1>
+  <div id="color-options">
+    <button data-car="carroVerde.png" style="background:#5bbe5b;">Verde</button>
+    <button data-car="carroVermelho.png" style="background:#c42b2b;">Vermelho</button>
+    <button data-car="carroCiano.png" style="background:#41c9c2;">Azul</button>
+    <button data-car="carroRoxo.png" style="background:#8b55be; color:white;">Roxo</button>
+  </div>
+</div>
+
+<canvas id="gameCanvas" width="400" height="600" style="display:none;"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// MENU
+const menu = document.getElementById("menu");
+const colorButtons = document.querySelectorAll("#color-options button");
+
+// IMAGEM DO CARRO
+const carImage = new Image();
+
+// CONFIGURAÇÕES
+let gameSpeed = 5;
+let score = 0;
+let gameOver = false;
+let theme = "day";
+
+// JOGADOR
+const player = {
+  x: canvas.width / 2 - 20,
+  y: canvas.height - 100,
+  width: 40,
+  height: 80,
+  speed: 5,
+  turbo: false,
+  shield: false,
+  shieldTimer: 0
+};
+
+// INIMIGOS
+const enemies = [];
+const enemyWidth = 40;
+const enemyHeight = 80;
+const enemyColors = ["#ff3333", "#ffcc00", "#00ccff", "#ff66ff"];
+
+// PISTA
+const roadLines = [];
+for (let i = 0; i < 10; i++) {
+  roadLines.push({ x: canvas.width / 2 - 5, y: i * 60, width: 10, height: 40 });
+}
+
+// POWER-UPS
+const powerUps = [];
+const powerTypes = ["turbo", "shield"];
+
+// CONTROLES
+const keys = {};
+document.addEventListener("keydown", (e) => (keys[e.key] = true));
+document.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+// --- FUNÇÕES ---
+function drawCar(x, y, color, isPlayer = false) {
+  if (isPlayer && carImage.complete) {
+    ctx.drawImage(carImage, x, y, 40, 80);
+  } else {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, 40, 80);
+  }
+}
+
+function drawRoad() {
+  let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  if (theme === "day") {
+    gradient.addColorStop(0, "#777");
+    gradient.addColorStop(1, "#444");
+  } else {
+    gradient.addColorStop(0, "#222");
+    gradient.addColorStop(1, "#000");
+  }
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(50, 0, 5, canvas.height);
+  ctx.fillRect(canvas.width - 55, 0, 5, canvas.height);
+
+  ctx.fillStyle = "#fff";
+  for (let line of roadLines) ctx.fillRect(line.x, line.y, line.width, line.height);
+}
+
+function updateRoad() {
+  for (let line of roadLines) {
+    line.y += gameSpeed;
+    if (line.y > canvas.height) line.y = -60;
+  }
+}
+
+function updatePlayer() {
+  if (keys["ArrowLeft"] && player.x > 55) player.x -= player.speed;
+  if (keys["ArrowRight"] && player.x < canvas.width - player.width - 55) player.x += player.speed;
+}
+
+function spawnEnemy() {
+  if (Math.random() < 0.01) {
+    const lane = Math.floor(Math.random() * 3);
+    const laneX = 70 + lane * 100;
+    enemies.push({
+      x: laneX,
+      y: -enemyHeight,
+      color: enemyColors[Math.floor(Math.random() * enemyColors.length)],
+      speed: gameSpeed + Math.random() * 2
+    });
+  }
+}
+
+function updateEnemies() {
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    enemies[i].y += enemies[i].speed;
+    if (enemies[i].y > canvas.height) {
+      enemies.splice(i, 1);
+      score++;
+      if (score % 5 === 0) gameSpeed += 0.1;
+    }
+  }
+}
+
+function spawnPowerUp() {
+  if (Math.random() < 0.005) {
+    const lane = Math.floor(Math.random() * 3);
+    const laneX = 70 + lane * 100;
+    const type = powerTypes[Math.floor(Math.random() * powerTypes.length)];
+    powerUps.push({ x: laneX, y: -40, type });
+  }
+}
+
+function updatePowerUps() {
+  for (let i = powerUps.length - 1; i >= 0; i--) {
+    powerUps[i].y += gameSpeed;
+    if (powerUps[i].y > canvas.height) powerUps.splice(i, 1);
+  }
+}
+
+function drawPowerUps() {
+  for (let p of powerUps) {
+    ctx.fillStyle = p.type === "turbo" ? "orange" : "cyan";
+    ctx.beginPath();
+    ctx.arc(p.x + 20, p.y + 20, 15, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function checkCollisions() {
+  for (let enemy of enemies) {
+    if (player.x < enemy.x + enemyWidth &&
+        player.x + player.width > enemy.x &&
+        player.y < enemy.y + enemyHeight &&
+        player.y + player.height > enemy.y) {
+      if (player.shield) enemies.splice(enemies.indexOf(enemy), 1);
+      else gameOver = true;
+    }
+  }
+
+  for (let i = powerUps.length - 1; i >= 0; i--) {
+    const p = powerUps[i];
+    if (player.x < p.x + 40 &&
+        player.x + player.width > p.x &&
+        player.y < p.y + 40 &&
+        player.y + player.height > p.y) {
+
+      if (p.type === "turbo") {
+        player.turbo = true;
+        player.speed = 10;
+        setTimeout(() => { player.turbo = false; player.speed = 6; }, 8000);
+      } else if (p.type === "shield") {
+        player.shield = true;
+        player.shieldTimer = 180;
+      }
+      powerUps.splice(i, 1);
+    }
+  }
+}
+
+function drawHUD() {
+  ctx.fillStyle = "#fff";
+  ctx.font = "20px Arial";
+  ctx.fillText("Pontos: " + score, 10, 30);
+
+  if (player.turbo) { ctx.fillStyle = "orange"; ctx.fillText("⚡ TURBO!", 160, 30); }
+  if (player.shield) { ctx.fillStyle = "cyan"; ctx.fillText("🛡️ ESCUDO", 160, 60); }
+}
+
+function drawShieldEffect() {
+  if (player.shield) {
+    ctx.strokeStyle = "cyan";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(player.x + 20, player.y + 40, 45, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawGameOver() {
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#fff";
+  ctx.font = "30px Arial";
+  ctx.fillText("💥 GAME OVER 💥", 90, 250);
+  ctx.font = "20px Arial";
+  ctx.fillText("Pontuação final: " + score, 130, 290);
+  ctx.fillText("Pressione R para reiniciar", 90, 330);
+}
+
+// LOOP PRINCIPAL
+function loop() {
+  if (!gameOver) {
+    updateRoad();
+    updatePlayer();
+    spawnEnemy();
+    spawnPowerUp();
+    updateEnemies();
+    updatePowerUps();
+    checkCollisions();
+
+    if (player.shield) player.shieldTimer--;
+    if (player.shieldTimer <= 0) player.shield = false;
+
+    theme = score % 40 < 20 ? "day" : "night";
+  }
+
+  drawRoad();
+  drawPowerUps();
+  for (let e of enemies) drawCar(e.x, e.y, e.color);
+  drawCar(player.x, player.y, null, true);
+  drawShieldEffect();
+  drawHUD();
+  if (gameOver) drawGameOver();
+
+  requestAnimationFrame(loop);
+}
+
+// REINICIAR COM "R"
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "r" && gameOver) {
+    enemies.length = 0;
+    powerUps.length = 0;
+    player.x = canvas.width / 2 - 20;
+    player.shield = false;
+    player.turbo = false;
+    score = 0;
+    gameSpeed = 5;
+    gameOver = false;
+  }
+});
+
+// BOTÕES DE COR
+colorButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    carImage.src = btn.dataset.car;
+    startGame();
+  });
+});
+
+// INICIA O JOGO
+function startGame() {
+  menu.style.display = "none";
+  canvas.style.display = "block";
+  loop();
+}
+</script>
+</body>
+</html>
