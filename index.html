@@ -1,11 +1,138 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Corrida 2D Avançada</title>
 <style>
+    /* Fonte opcional (coloque no <head> se quiser usar) */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+.press-start-2p-regular {
+  font-family: "Press Start 2P", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+.vt323-regular {
+  font-family: "VT323", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+/* TÍTULO - SpeedRace */
+#gameTitle {
+  font-family:"Press Start 2P", system-ui ;
+  font-weight: 900;
+  letter-spacing: 6px;
+  font-size: clamp(36px, 6vw, 88px); /* responsivo: cresce conforme a tela */
+  color: #ffffff;
+  text-transform: uppercase;
+ 
+  margin-top: -80px;
+  padding: 6px 18px;
+  position: relative;
+  z-index: 2;
+  -webkit-text-stroke: 1px rgba(0,0,0,0.45);
+  text-shadow:
+    0 0 6px rgba(254, 255, 255, 0.923),
+    0 0 14px rgb(47, 29, 76),
+    0 4px 20px rgba(0,0,0,0.6);
+  background: linear-gradient(90deg, #ffffff 0%, #a8f0ff 20%, #7be1ff 40%, #00d4ff 60%, #1b9bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent; /* texto usa o gradiente */
+  display: inline-block;
+  transform: translateZ(0);
+  animation: neonPulse 2.4s ease-in-out infinite;
+}
+
+
+
+
+
+/* Animações */
+@keyframes neonPulse {
+  0%   { transform: translateY(0) scale(1); filter: drop-shadow(0 0 6px rgba(0,200,255,0.15)); }
+  50%  { transform: translateY(-3px) scale(1.02); filter: drop-shadow(0 0 18px rgba(0,200,255,0.30)); }
+  100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 6px rgba(0,200,255,0.15)); }
+}
+
+@keyframes drift {
+  0%   { transform: translateX(-12px); opacity: .35; }
+  50%  { transform: translateX(8px); opacity: .6; }
+  100% { transform: translateX(-12px); opacity: .35; }
+}
+
+@keyframes growShrink {
+  0%   { transform: scaleX(0.9); opacity: .8; }
+  50%  { transform: scaleX(1.05); opacity: 1; }
+  100% { transform: scaleX(0.9); opacity: .8; }
+}
+
+/* Responsividade extra: menu pequeno em telas muito pequenas */
+@media (max-width: 420px) {
+  #gameTitle { letter-spacing: 3px; font-size: clamp(28px, 10vw, 44px); }
+  #gameTitle + .title-underline { width: 120px; height: 5px; }
+}
+
+    #gameOverMenu {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 30px 50px;
+  animation: fadeIn 0.6s ease-in-out;
+  z-index: 10;
+}
+
+#gameOverMenu h2 {
+    font-family: "VT323", monospace;
+  color: #893be1;
+  text-shadow: 0 0 15px #893be1, 0 0 25px #893be1;
+  font-size: 3em;
+  margin-bottom: 1px;
+}
+
+#gameOverMenu p {
+    font-family: "Press Start 2P", system-ui;
+  color: white;
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+#gameOverMenu button {
+  background: #222;
+  border: 2px solid #893be1;
+  color: #fff;
+  font-size: 16px;
+  padding: 10px 25px;
+  margin: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#gameOverMenu button:hover {
+  background: #6509b6;
+  color: #fff;
+  box-shadow: 0 0 15px #7800e1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -60%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
   body {
+    font-family:"Press Start 2P", system-ui ;
     margin: 0;
     background: #222;
     display: flex;
@@ -24,7 +151,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 3px solid #fff;
   border-radius: 10px;
   box-shadow: 0 0 20px #000;
 }
@@ -37,17 +163,21 @@
 
   #menu {
     text-align: center;
+    
   }
 
   #color-options button {
-    width: 120px;
-    height: 60px;
-    margin: 10px;
+    letter-spacing: 2px;
+    font-size: 17px;
+    font-family:"Press Start 2P", system-ui ;
+    width: 160px;
+    height: 70px;
+    margin: 4px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    color: white;
+    color: rgb(238, 238, 238);
     box-shadow: 0 0 10px #000;
   }
 </style>
@@ -55,9 +185,10 @@
 <body>
 
 <div id="menu">
-  <h1 style="color:white;">Escolha a cor do carro:</h1>
+    <h1 id="gameTitle">SpeedRace</h1>
+  <h2 style="color:white;">Escolha a cor do carro:</h2>
   <div id="color-options">
-    <button data-car="carroVerde.png" style="background:#5bbe5b;">Verde</button>
+    <button data-car="carroVerde.png" style="background:#50a950;">Verde</button>
     <button data-car="carroVermelho.png" style="background:#c42b2b;">Vermelho</button>
     <button data-car="carroCiano.png" style="background:#41c9c2;">Azul</button>
     <button data-car="carroRoxo.png" style="background:#8b55be; color:white;">Roxo</button>
@@ -66,9 +197,22 @@
 
 <canvas id="gameCanvas" width="400" height="600" style="display:none;"></canvas>
 
+<div id="gameOverMenu" style="display:none; text-align:center;">
+  <h2 style="color:white;">💥 GAME OVER 💥</h2>
+  <p style="color:white;">Pontuação final: <span id="finalScore">0</span></p>
+  <button id="retryBtn" style="margin:10px; padding:10px 20px; font-size:18px;">🔁 Rejogar</button>
+  <button id="menuBtn" style="margin:10px; padding:10px 20px; font-size:18px;">🏠 Voltar ao Menu</button>
+</div>
+
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+const gameOverMenu = document.getElementById("gameOverMenu");
+const finalScore = document.getElementById("finalScore");
+const retryBtn = document.getElementById("retryBtn");
+const menuBtn = document.getElementById("menuBtn");
+
 
 // MENU
 const menu = document.getElementById("menu");
@@ -116,15 +260,32 @@ const keys = {};
 document.addEventListener("keydown", (e) => (keys[e.key] = true));
 document.addEventListener("keyup", (e) => (keys[e.key] = false));
 
+const enemySprites = [
+  "carroinimigorosa.png",
+  "carroinimigoazul.png",
+  "carroinimigoamarelo.png",
+  "carroinimigolaranja.png"
+];
+
 // --- FUNÇÕES ---
-function drawCar(x, y, color, isPlayer = false) {
+function drawCar(x, y, color, isPlayer = false, img = null) {
   if (isPlayer && carImage.complete) {
+    // Carro do jogador (normal)
     ctx.drawImage(carImage, x, y, 40, 80);
+  } else if (img && img.complete) {
+    // Carro inimigo — invertido (vem de frente)
+    ctx.save();
+    ctx.translate(x + 20, y + 40); // centraliza
+    ctx.rotate(Math.PI); // 180° (de cabeça pra baixo)
+    ctx.drawImage(img, -20, -40, 40, 80);
+    ctx.restore();
   } else {
-    ctx.fillStyle = color;
+    // fallback se imagem não carregar
+    ctx.fillStyle = color || "#999";
     ctx.fillRect(x, y, 40, 80);
   }
 }
+
 
 function drawRoad() {
   let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -159,17 +320,23 @@ function updatePlayer() {
 }
 
 function spawnEnemy() {
-  if (Math.random() < 0.01) {
+  if (Math.random() < 0.015) { // ligeiramente mais frequente
     const lane = Math.floor(Math.random() * 3);
     const laneX = 70 + lane * 100;
+    
+    const spriteSrc = enemySprites[Math.floor(Math.random() * enemySprites.length)];
+    const img = new Image();
+    img.src = spriteSrc;
+
     enemies.push({
       x: laneX,
       y: -enemyHeight,
-      color: enemyColors[Math.floor(Math.random() * enemyColors.length)],
+      img: img,
       speed: gameSpeed + Math.random() * 2
     });
   }
 }
+
 
 function updateEnemies() {
   for (let i = enemies.length - 1; i >= 0; i--) {
@@ -260,13 +427,11 @@ function drawShieldEffect() {
 function drawGameOver() {
   ctx.fillStyle = "rgba(0,0,0,0.7)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#fff";
-  ctx.font = "30px Arial";
-  ctx.fillText("💥 GAME OVER 💥", 90, 250);
-  ctx.font = "20px Arial";
-  ctx.fillText("Pontuação final: " + score, 130, 290);
-  ctx.fillText("Pressione R para reiniciar", 90, 330);
+  // Mostra o menu de fim de jogo
+  gameOverMenu.style.display = "block";
+  finalScore.textContent = score;
 }
+
 
 // LOOP PRINCIPAL
 function loop() {
@@ -287,11 +452,15 @@ function loop() {
 
   drawRoad();
   drawPowerUps();
-  for (let e of enemies) drawCar(e.x, e.y, e.color);
+ for (let e of enemies) drawCar(e.x, e.y, null, false, e.img);
   drawCar(player.x, player.y, null, true);
   drawShieldEffect();
   drawHUD();
-  if (gameOver) drawGameOver();
+  if (gameOver) {
+  drawGameOver();
+  return; // pausa o loop
+}
+
 
   requestAnimationFrame(loop);
 }
@@ -324,6 +493,31 @@ function startGame() {
   canvas.style.display = "block";
   loop();
 }
+retryBtn.addEventListener("click", () => {
+  resetGame();
+  gameOverMenu.style.display = "none";
+  loop();
+});
+
+menuBtn.addEventListener("click", () => {
+  resetGame();
+  gameOverMenu.style.display = "none";
+  canvas.style.display = "none";
+  menu.style.display = "flex";
+});
+
+// Função para reiniciar tudo
+function resetGame() {
+  enemies.length = 0;
+  powerUps.length = 0;
+  player.x = canvas.width / 2 - 20;
+  player.shield = false;
+  player.turbo = false;
+  score = 0;
+  gameSpeed = 5;
+  gameOver = false;
+}
+
 </script>
 </body>
 </html>
